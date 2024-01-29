@@ -1,0 +1,757 @@
+openapi: 3.0.3
+info:
+  title: Master Data Management API
+  version: '0.0'
+  description: |-
+    An API to manage your master data related to your payment services with paymenttools.
+    
+    ---
+    
+    # Domain Model
+    Our payment services share the following model for master data by defining the following main entities in a **hierarchical** structure:
+    * `Merchant`: Top level entity that represents our customer. This entity can only be created by paymenttools.
+    * `Company`:  Entity that represents legal entities. A _Merchant_ must contain one or more _companies_. These entities can be created by the customer.
+    * `Store`: Entity that represents physical or virtual location (facilities). A _Company_ must contain one or more _stores_. These entities can be created by the customer.
+    * `Terminal`: Entity that represents physical or virtual POS (point of sale) devices. A _Store_ must contain one or more _terminals_. These entities can be created by the customer.
+    
+    In addition, a non-hierarchical support entity is defined to provide more flexibility to the model
+    * `TerminalProfile`: Entity that contains terminal configuration parameters. This entity can be assigned to any entity above. These entities can be created by the customer.
+    
+    ## Inheritance & Overrides
+    The Master Data Management system supports inheritance across the hierarchical structure defined above as follows.
+    * Only the attributes defined in the `TerminalProfile` entity are affected, thus attributes that belong to the main entities are excluded from the inheritance
+    * Inheritance happens top-down in the hierarchy. For example: all attributes defined in a `TerminalProfile` entity assigned to a `Company` will be inherited to all of its `Stores` and corresponding `Terminals`
+    * Any attribute (or set of attributes) can be overridden by a `TerminalProfile` entity in a level below. For example: attributes defined in a `TerminalProfile` entity assigned to a `Store` will override the ones defined at the corresponding `Company`.
+    
+    # Message Format
+    This API follows the conventions of the [JSON:API](https://jsonapi.org/format/ "A specification for building apis in JSON") specification for the format of the messages exchanged between client and server.
+    This is valid for both **requests** and **response** payloads of the messages.
+    
+    # Communication Flows
+    The API is divided in two flows:
+      1. Asynchronous Communication for mutation operations (create, update and delete)
+      2. Synchronous Communication for query operations (read)
+    
+    ## Asynchronous Flow
+    Because of the inherit nature of the payment system backend, pushing master data configuration in an asynchronous way is a better fit. 
+    This means that when you create, update or delete a resource you will get just an acknowledge of your request. This will be in the form of a job. Later on you can check on the status of your request by querying the corresponding job endpoint.
+
+    ## Authentication & Authorization
+    In order to get access to the API, the API key must be provided in headers as "**apiKey**".
+servers:
+  - url: https://api.paymenttools.com/mdm/v0/
+tags:
+  - name: Company
+    description: Manage company master data
+  - name: Store
+    description: Manage store master data
+  - name: Terminal
+    description: Manage terminal master data
+  - name: TerminalProfile
+    description: Manage terminal profiles master data
+
+paths:
+  /companies:
+    post:
+      summary: Create a new company asynchronously
+      tags:
+        - Company
+      description: Request the creation of a new company asynchronously. Just returns a 202-response as acknowledge containing a location header to the corresponding asynchronous job, which status can be consulted subsequently. When the job is completed, the resource can be found under its standard location.
+      operationId: createCompany
+      requestBody:
+        description: The company creation request. Provide a request object with all required attributes
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/CompanyStrictDTO'
+      responses:
+        '202':
+          $ref: '#/components/responses/202AsyncRequestAccepted'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+  /companies/{companyId}:
+    patch:
+      summary: Update a company asynchronously
+      tags:
+        - Company
+      description: Request the update of the given company asynchronously. Just returns a 202-response as acknowledge containing a location header to the corresponding asynchronous job, which status can be consulted subsequently. When the job is completed, the resource can be found under its standard location.
+      operationId: updateCompany
+      parameters:
+        - $ref: '#/components/parameters/companyIdParameter'
+      requestBody:
+        description: The company update request. Provide a request object with only the attributes to be changed (partial update)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyFlexibleDTO'
+      responses:
+        '202':
+          $ref: '#/components/responses/202AsyncRequestAccepted'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+    get:
+      summary: Get a company by ID
+      tags:
+        - Company
+      description: Get company information for the given identifier
+      operationId: getCompany
+      parameters:
+        - $ref: '#/components/parameters/companyIdParameter'
+      responses:
+        '200':
+          description: Returns a single company
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/CompanyStrictDTO'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+
+
+  /stores:
+    post:
+      summary: Create a new store asynchronously
+      tags:
+        - Store
+      description: Request the creation of a new store asynchronously. Just returns a 202-response as acknowledge containing a location header to the corresponding asynchronous job, which status can be consulted subsequently. When the job is completed, the resource can be found under its standard location.
+      operationId: createStore
+      requestBody:
+        description: The store creation request. Provide a request object with all required attributes
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/StoreStrictDTO'
+
+      responses:
+        '202':
+          $ref: '#/components/responses/202AsyncRequestAccepted'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+  /stores/{storeId}:
+    patch:
+      summary: Update a store asynchronously
+      tags:
+        - Store
+      description: Request the update of the given store asynchronously. Just returns a 202-response as acknowledge containing a location header to the corresponding asynchronous job, which status can be consulted subsequently. When the job is completed, the resource can be found under its standard location.
+      operationId: updateStore
+      parameters:
+        - $ref: '#/components/parameters/storeIdParameter'
+      requestBody:
+        description: The store update request. Provide a request object with only the attributes to be changed (partial update)
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StoreFlexibleDTO'
+      responses:
+        '202':
+          $ref: '#/components/responses/202AsyncRequestAccepted'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+    get:
+      summary: Get a store by ID
+      tags:
+        - Store
+      description: Get store information for the given id
+      operationId: getStore
+      parameters:
+        - $ref: '#/components/parameters/storeIdParameter'
+      responses:
+        '200':
+          description: Returns a single store
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/StoreStrictDTO'
+
+  /terminals:
+    post:
+      summary: Create a terminal asynchronously
+      tags:
+        - Terminal
+      description: Request the creation of a new terminal asynchronously. Just returns a 202-response as acknowledge containing a location header to the corresponding asynchronous job, which status can be consulted subsequently. When the job is completed, the resource can be found under its standard location.
+      operationId: createTerminal
+      requestBody:
+        description: The terminal creation request. Provide a request object with all required attributes
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TerminalStrictDTO'
+      responses:
+        '202':
+          $ref: '#/components/responses/202AsyncRequestAccepted'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+  /terminals/{terminalId}:
+    patch:
+      summary: Update a terminal asynchronously
+      tags:
+        - Terminal
+      description: Request the update of the given terminal asynchronously. Just returns a 202-response as acknowledge containing a location header to the corresponding asynchronous job, which status can be consulted subsequently. When the job is completed, the resource can be found under its standard location.
+      operationId: updateTerminal
+      parameters:
+        - $ref: '#/components/parameters/terminalIdParameter'
+      requestBody:
+        description: The terminal update request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminalFlexibleDTO'
+      responses:
+        '202':
+          $ref: '#/components/responses/202AsyncRequestAccepted'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+    get:
+      summary: Get a terminal by ID
+      tags:
+        - Terminal
+      description: Get terminal information for the given id
+      operationId: getTerminal
+      parameters:
+        - $ref: '#/components/parameters/terminalIdParameter'
+      responses:
+        '200':
+          description: Returns a single terminal
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TerminalStrictDTO'
+
+  /terminal-profiles:
+    post:
+      summary: Create a new terminal-profile asynchronously.
+      tags:
+        - TerminalProfile
+      description: Request the creation of a new terminal-profile asynchronously. Just returns a 202-response as acknowledge containing a location header to the corresponding asynchronous job, which status can be consulted subsequently. When the job is completed, the resource can be found under its standard location.
+      operationId: createTerminalProfile
+      requestBody:
+        description: The terminal-profile creation request. Provide a request object with all required attributes
+        content:
+          application/vnd.api+json:
+            schema:
+              $ref: '#/components/schemas/TerminalProfileStrictDTO'
+      responses:
+        '202':
+          $ref: '#/components/responses/202AsyncRequestAccepted'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+  /terminal-profiles/{terminalProfileId}:
+    patch:
+      summary: Update a terminal-profile asynchronously
+      tags:
+        - TerminalProfile
+      description: Request the update of the given terminal-profile asynchronously. Just returns a 202-response as acknowledge containing a location header to the corresponding asynchronous job, which status can be consulted subsequently. When the job is completed, the resource can be found under its standard location.
+      operationId: updateTerminalProfile
+      parameters:
+        - $ref: '#/components/parameters/terminalProfileIdParameter'
+      requestBody:
+        description: The terminal-profile update request
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TerminalProfileFlexibleDTO'
+      responses:
+        '202':
+          $ref: '#/components/responses/202AsyncRequestAccepted'
+        '4XX':
+          $ref: '#/components/responses/4XXInvalidOperation'
+    get:
+      summary: Get a terminal-profile by ID
+      tags:
+        - TerminalProfile
+      description: Get terminal information for the given id
+      operationId: getTerminalProfile
+      parameters:
+        - $ref: '#/components/parameters/terminalProfileIdParameter'
+      responses:
+        '200':
+          description: Returns a single terminal profile
+          content:
+            application/vnd.api+json:
+              schema:
+                $ref: '#/components/schemas/TerminalProfileStrictDTO'
+
+
+  /jobs/{jobId}:
+    get:
+      summary: Check the job information and current status by ID
+      tags:
+        - Jobs
+      description: Get the status of the corresponding job to a specific mutation request (POST, PATCH, DELETE) on any of main entities (Company, Store, Terminal or TerminalProfile)
+      operationId: getJob
+      parameters:
+        - $ref: '#/components/parameters/jobIdParameter'
+      responses:
+        '200':
+          $ref: '#/components/responses/200AsyncRequestInProcess'
+        '303':
+          $ref: '#/components/responses/303AsyncRequestCompleted'
+        '4XX':
+          $ref: '#/components/responses/4XXAsyncRequestFailed'
+
+components:
+  schemas:
+    ResourceIdentifier:
+      type: object
+      required:
+        - type
+        - id
+      properties:
+        type:
+          type: string
+        id:
+          type: string
+
+    ResourceObject:
+      allOf:
+        - $ref: '#/components/schemas/ResourceIdentifier'
+        - type: object
+          required:
+            - attributes
+          properties:
+            type:
+              type: string
+            attributes:
+              type: object
+            relationships:
+              type: object
+
+    DataSingle:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: object
+    DataMultiple:
+      type: object
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items: {}
+
+    MerchantId:
+      allOf:
+        - $ref: '#/components/schemas/ResourceIdentifier'
+        - properties:
+            id:
+              example: MER001
+            type: # constant value
+              enum:
+                - merchants
+              example: merchants
+
+    CompanyId:
+      allOf:
+        - $ref: '#/components/schemas/ResourceIdentifier'
+        - properties:
+            id:
+              example: MER001-COM001
+            type: # constant value
+              enum:
+                - companies
+              example: companies
+
+    Company:
+      allOf:
+        - $ref: '#/components/schemas/ResourceObject'
+        - $ref: '#/components/schemas/CompanyId'
+        - properties:
+            attributes: # define company attributes here
+              properties:
+                name:
+                  type: string
+                  example: "paymenttools GmbH"
+                address:
+                  type: string
+                  example: "Domstraße 20 D-50668 Köln"
+            relationships:
+              type: object
+              properties:
+                merchant:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/MerchantId'
+                stores:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/StoreId'
+                terminalProfile:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TerminalProfileId'
+    CompanyRequiredAttributes:
+      type: object
+      properties:
+        attributes:
+          required: # list store mandatory attributes here
+            - name
+            - address
+    CompanyStrictDTO:
+      allOf:
+        - $ref: '#/components/schemas/DataSingle'
+        - properties:
+            data:
+              allOf:
+                - $ref: '#/components/schemas/Company'
+                - $ref: '#/components/schemas/CompanyRequiredAttributes'
+    CompanyFlexibleDTO:
+      allOf:
+        - $ref: '#/components/schemas/DataSingle'
+        - properties:
+            data:
+              $ref: '#/components/schemas/Company'
+
+    StoreId:
+      allOf:
+        - $ref: '#/components/schemas/ResourceIdentifier'
+        - properties:
+            id:
+              example: MER001-STO001
+            type: # constant value
+              enum:
+                - stores
+              example: stores
+    Store:
+      allOf:
+        - $ref: '#/components/schemas/ResourceObject'
+        - $ref: '#/components/schemas/StoreId'
+        - properties:
+            attributes:
+              properties:
+                legalName:
+                  type: string
+            relationships:
+              properties:
+                company:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/CompanyId'
+                terminals:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TerminalId'
+                terminalProfile:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TerminalProfileId'
+    StoreRequiredAttributes:
+      type: object
+      properties:
+        attributes:
+          required: # list store mandatory attributes here
+            - legalName
+    StoreStrictDTO:
+      allOf:
+        - $ref: '#/components/schemas/DataSingle'
+        - properties:
+            data:
+              allOf:
+                - $ref: '#/components/schemas/Store'
+                - $ref: '#/components/schemas/StoreRequiredAttributes'
+    StoreFlexibleDTO:
+      allOf:
+        - $ref: '#/components/schemas/DataSingle'
+        - properties:
+            data:
+              $ref: '#/components/schemas/Store'
+
+    TerminalId:
+      allOf:
+        - $ref: '#/components/schemas/ResourceIdentifier'
+        - properties:
+            id:
+              example: 12300001
+              description: Prefix is defined by paymenttools. This is the same as the (acquirer) TID
+            type: # constant value
+              enum:
+                - terminals
+              example: terminals
+    Terminal:
+      allOf:
+        - $ref: '#/components/schemas/ResourceObject'
+        - $ref: '#/components/schemas/TerminalId'
+        - properties:
+            attributes: {}
+            relationships:
+              properties:
+                store:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/StoreId'
+                terminalProfile:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      $ref: '#/components/schemas/TerminalProfileId'
+    TerminalRequiredAttributes:
+      type: object
+      properties:
+        attributes:
+          required: # list terminal mandatory attributes here
+            - requiredTerminalAttribute
+    TerminalStrictDTO:
+      allOf:
+        - $ref: '#/components/schemas/DataSingle'
+        - properties:
+            data:
+              allOf:
+                - $ref: '#/components/schemas/Terminal'
+                - $ref: '#/components/schemas/TerminalRequiredAttributes'
+    TerminalFlexibleDTO:
+      allOf:
+        - $ref: '#/components/schemas/DataSingle'
+        - properties:
+            data:
+              $ref: '#/components/schemas/Terminal'
+
+    TerminalProfileId:
+      allOf:
+        - $ref: '#/components/schemas/ResourceIdentifier'
+        - properties:
+            id:
+              example: MER001-TEP001
+            type: # constant value
+              enum:
+                - terminal-profiles
+              example: terminal-profiles
+    TerminalProfile:
+      allOf:
+        - $ref: '#/components/schemas/ResourceObject'
+        - $ref: '#/components/schemas/TerminalProfileId'
+        - properties:
+            attributes:
+              properties: {}
+            relationships:
+              properties:
+                merchants:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/MerchantId'
+                companies:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/CompanyId'
+                stores:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/StoreId'
+                terminals:
+                  type: object
+                  required:
+                    - data
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/TerminalId'
+    TerminalProfileRequiredAttributes:
+      type: object
+      properties:
+        attributes:
+          required: # list terminal-profile mandatory attributes here
+            - requiredTerminalProfileAttribute
+    TerminalProfileStrictDTO:
+      allOf:
+        - $ref: '#/components/schemas/DataSingle'
+        - properties:
+            data:
+              allOf:
+                - $ref: '#/components/schemas/TerminalProfile'
+                - $ref: '#/components/schemas/TerminalProfileRequiredAttributes'
+    TerminalProfileFlexibleDTO:
+      allOf:
+        - $ref: '#/components/schemas/DataSingle'
+        - properties:
+            data:
+              $ref: '#/components/schemas/TerminalProfile'
+
+    JobResponse:
+      type: object
+      properties:
+        data:
+          properties:
+            type:
+              type: string
+              enum:
+                - jobs
+            id:
+              type: string
+            attributes:
+              properties:
+                status:
+                  $ref: '#/components/schemas/JobStatus'
+    JobStatus:
+      type: string
+      enum:
+        - 'PROCESSING'
+        - 'COMPLETED'
+        - 'FAILED'
+
+    ErrorResponse:
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              status:
+                type: string
+              code:
+                type: string
+                nullable: true
+              source:
+                type: string
+              title:
+                type: string
+                nullable: true
+              detail:
+                type: string
+
+  parameters:
+    companyIdParameter:
+      name: companyId
+      in: path
+      required: true
+      description: The complete company identifier (including merchant id prefix)
+      schema:
+        type: string
+        example: MER001-COM001
+
+    storeIdParameter:
+      name: storeId
+      in: path
+      required: true
+      description: The complete store identifier (including merchant id prefix)
+      schema:
+        type: string
+        example: MER001-STO001
+
+    terminalIdParameter:
+      name: terminalId
+      in: path
+      required: true
+      description: The complete terminal identifier (including merchant id prefix)
+      schema:
+        type: string
+        example: 12300001
+
+    terminalProfileIdParameter:
+      name: terminalProfileId
+      in: path
+      required: true
+      description: The complete terminal-profile identifier (including merchant id prefix)
+      schema:
+        type: string
+        example: MER001-TEP001
+
+    jobIdParameter:
+      name: jobId
+      in: path
+      description: Job Id returned by the mutation request
+      required: true
+      schema:
+        type: string
+
+  responses:
+    4XXInvalidOperation:
+      description: The job was terminated because of a failure. The requested operation is invalid.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    202AsyncRequestAccepted:
+      description: The mutation (create, update, delete) request was accepted. A corresponding (asynchronous) job-url is provided in the location header.
+      headers:
+        Content-Location:
+          required: true
+          description: The url to check the status of the job associated to the mutation request.
+          schema:
+            type: string
+            format: url
+
+    200AsyncRequestInProcess:
+      description: The job is still in process (the corresponding mutation operation is not completed yet). Please retry later on.
+      headers:
+        Retry-After:
+          required: true
+          description: Number of seconds to wait until retrying to fetch the resource
+          schema:
+            type: integer
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '#/components/schemas/JobResponse'
+
+    303AsyncRequestCompleted:
+      description: The job was completed successfully (the corresponding mutation operation was applied successfully). The (new) resource can be found under the url provided in the location header (request will be redirected to the resource url).
+      headers:
+        Location:
+          required: true
+          description: Resource's URL after the mutation was applied successfully
+          schema:
+            type: string
+            format: url
+
+    4XXAsyncRequestFailed:
+      description: The job was terminated because of a failure. The requested operation is invalid.
+      content:
+        application/vnd.api+json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: apiKey
+
+security:
+  - apiKey: []
