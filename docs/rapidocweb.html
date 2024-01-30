@@ -1,5 +1,5 @@
 <!doctype html> <!-- Important: must specify -->
-<html>
+<html lang="en">
 <head>
   <meta charset="utf-8"> <!-- Important: rapi-doc uses utf8 characters -->
   <script type="module" src="https://unpkg.com/rapidoc/dist/rapidoc-min.js"></script>
@@ -11,13 +11,16 @@
     header-color="#2E3859"
     render-style = "read"
     update-route = true
-    nav-bg-color = "#2E3859"
+    nav-bg-color = "#F7F7F4"
     show-header = true
     allow-spec-url-load = false
     allow-spec-file-load = false
     allow-spec-file-download = true
     allow-try = false
     allow-server-selection = false
-  > </rapi-doc>
+  >
+    <!-- provide slot attribute to place an element at desired location -->
+    <img slot="nav-logo" src="images/PT_RGB_Yellow.png" style="height:50px"/>
+  </rapi-doc>
 </body>
 </html>
