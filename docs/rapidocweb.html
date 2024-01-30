@@ -8,12 +8,18 @@
 <body>
   <rapi-doc
     spec-url="master-data-management.oas.yaml"
-    theme = "light"
-    header-color="#2E3859"
-    render-style = "read"
-    update-route = true
 
-    nav-bg-color = "#F7F7F4"
+    update-route = true
+    render-style = "read"
+    heading-text = "Master Data Management (MDM) API - Specification"
+
+    theme = "light"
+    bg-color = "#F7F7F4"
+    header-color="#2E3859"
+    primary-color = "#FAB608"
+    regular-font = "Poppins"
+
+    nav-bg-color = "#FFFFFF"
     nav-hover-bg-color = "#FFE29D"
 
     info-description-headings-in-navbar = true
@@ -24,12 +30,13 @@
     allow-try = false
     allow-server-selection = false
 
+    schema-style = "table"
   >
     <!-- HTML Elements without slot attribute goes into default location-->
-    <h1 slot="header"> Master Data Management (MDM) API  </h1>
+    <!-- h1 slot="header">Master Data Management (MDM) API - Specification</h1 -->
 
     <!-- provide slot attribute to place an element at desired location -->
-    <img slot="logo" src="images/PT_RGB_Yellow.png" style="width:300px" alt="paymenttools"/>
+    <img slot="logo" src="images/PT_RGB_Yellow.png" style="width:250px" alt="paymenttools"/>
 
     <div slot="footer">
       © 2024 Paymenttools - all rights reserved
