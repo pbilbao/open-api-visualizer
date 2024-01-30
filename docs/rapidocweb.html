@@ -19,8 +19,16 @@
     allow-try = false
     allow-server-selection = false
   >
+    <div> <!-- HTML Elements without slot attribute goes into default location-->
+      <h1> Master Data Management API  </h1>
+    </div>
+
     <!-- provide slot attribute to place an element at desired location -->
-    <img slot="logo" src="images/PT_RGB_Yellow.png" style="width:330px"/>
+    <img slot="logo" src="images/PT_RGB_Yellow.png" style="width:300px"/>
+
+    <div slot="footer">
+      © 2024 Paymenttools - all rights reserved
+    </div>
   </rapi-doc>
 </body>
 </html>
