@@ -12,19 +12,21 @@
     header-color="#2E3859"
     render-style = "read"
     update-route = true
+
     nav-bg-color = "#F7F7F4"
+    nav-hover-bg-color = "#FFE29D"
+
+    info-description-headings-in-navbar = true
     show-header = true
     allow-spec-url-load = false
     allow-spec-file-load = false
     allow-spec-file-download = true
     allow-try = false
     allow-server-selection = false
+
   >
     <!-- HTML Elements without slot attribute goes into default location-->
-
-    <div slot="header">
-      <h1> Master Data Management (MDM) API  </h1>
-    </div>
+    <h1 slot="header"> Master Data Management (MDM) API  </h1>
 
     <!-- provide slot attribute to place an element at desired location -->
     <img slot="logo" src="images/PT_RGB_Yellow.png" style="width:300px" alt="paymenttools"/>
